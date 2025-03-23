@@ -2,6 +2,10 @@ import { useState, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
 import Groq from "groq-sdk";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -135,6 +139,7 @@ const AssignmentChecker = () => {
       <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
         Pemeriksa Tugas Otomatis
       </h1>
+      <p>Model : Llama 3.1 8B Instant</p>
       
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Unggah File PDF (Maks. 5 file)</label>
@@ -240,9 +245,12 @@ const AssignmentChecker = () => {
                   {result.name}
                 </h4>
                 <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-line text-gray-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
                     {result.grade}
-                  </div>
+                  </ReactMarkdown>
                 </div>
               </div>
             ))}
