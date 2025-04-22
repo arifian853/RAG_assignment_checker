@@ -78,7 +78,9 @@ Harap berikan penilaian terperinci atas kode ini berdasarkan petunjuk di atas. S
 2. Penilaian kualitas kode (keterbacaan, organisasi, komentar)
 3. Penilaian fungsionalitas (apakah kode berfungsi seperti yang diharapkan?)
 4. Umpan balik khusus tentang area yang perlu ditingkatkan
-5. Skor numerik dari rentang 65-95 jika sesuai dengan instruksi PANDUAN EVALUASI di atas.
+5. Kesesuaian dengan PANDUAN EVALUASI di atas.
+6. Skor numerik dari rentang 65-95 jika sesuai dengan instruksi PANDUAN EVALUASI di atas.
+7. Berikan nilai tambahan untuk setiap improvisasi yang dilakukan, misal mengganti variabel atau menambahkan komentar, atau menggunakan fungsi yang lebih baik. Atau mengganti isi konten dengan nama sendiri atau nama project.
 
 Jika Anda perlu berpikir tentang kode ini, letakkan pemikiran Anda di dalam tag <think>...</think>. Bagian ini akan ditampilkan secara terpisah dari penilaian utama.
 
