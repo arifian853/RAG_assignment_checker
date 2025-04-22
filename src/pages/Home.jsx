@@ -39,6 +39,32 @@ export const Home = () => {
             </div>
           </Link>
 
+          {/* Python Assignment Checker Card */}
+          <Link 
+            to="/python" 
+            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col"
+          >
+            <div className="bg-yellow-600 p-4">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+            </div>
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Python Assignment Checker</h2>
+              <p className="text-gray-600">
+                Upload Python assignments and get AI-powered evaluations based on your criteria.
+              </p>
+              <div className="mt-4 text-yellow-600 font-medium flex items-center">
+                Check Python code
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+
           {/* Groq Chat Card */}
           <Link 
             to="/groq-chat" 
