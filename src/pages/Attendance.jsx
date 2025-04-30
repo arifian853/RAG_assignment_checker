@@ -288,7 +288,7 @@ Return a JSON object with this exact format:
       // Call Groq API
       const response = await groq.chat.completions.create({
         messages: [{ role: "user", content: prompt }],
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         temperature: 0.1,
         response_format: { type: "json_object" }
       });
@@ -389,7 +389,7 @@ Return a JSON object with this exact format:
                 onChange={() => setUsingAI(!usingAI)}
                 disabled={loading}
               />
-              <span className="ml-2 text-gray-700">Use AI for name matching (Llama 3.1 8B)</span>
+              <span className="ml-2 text-gray-700">Use AI for name matching (Llama 3.3 70B Versatile)</span>
             </label>
           </div>
         </div>

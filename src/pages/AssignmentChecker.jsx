@@ -115,7 +115,7 @@ const AssignmentChecker = () => {
                 content: `${instruction}\n\nTeks tugas:\n${text.substring(0, 15000)}` 
               },
             ],
-            model: "llama-3.1-8b-instant",
+            model: "llama-3.3-70b-versatile",
           });
 
           return {
@@ -139,7 +139,7 @@ const AssignmentChecker = () => {
       <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
         Pemeriksa Tugas Otomatis
       </h1>
-      <p>Model : Llama 3.1 8B Instant</p>
+      <p>Model : Llama 3.3 70B Versatile</p>
       
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Unggah File PDF (Maks. 5 file)</label>
