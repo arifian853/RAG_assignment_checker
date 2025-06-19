@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -7,16 +7,17 @@ import "katex/dist/katex.min.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: import.meta.env.VITE_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export const CodingAssignment = () => {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [fileContent, setFileContent] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState(
+    "You are an expert Python programming instructor with extensive experience in code evaluation and academic assessment. Your role is to provide comprehensive, constructive feedback on student Python assignments. Analyze the code thoroughly for functionality, code quality, best practices, and educational value. Provide detailed feedback including strengths, areas for improvement, and specific suggestions for enhancement. Always conclude your evaluation with a numerical score based on the criteria provided."
+  );
   const [instructions, setInstructions] = useState("");
   const [assessment, setAssessment] = useState("");
   const [thinking, setThinking] = useState("");
@@ -62,39 +63,32 @@ export const CodingAssignment = () => {
     setShowThinking(false);
 
     try {
-      const prompt = `
-Anda adalah instruktur pemrograman Python yang sedang mengevaluasi tugas mahasiswa.
+      const prompt = `${systemPrompt}
+
+Instruksi Penilaian:
+${instructions}
 
 KODE PYTHON:
 \`\`\`python
 ${fileContent}
 \`\`\`
 
-PANDUAN EVALUASI:
-${instructions}
-
 Harap berikan penilaian terperinci atas kode ini berdasarkan petunjuk di atas. Sertakan:
 1. Evaluasi keseluruhan (kekuatan dan kelemahan)
 2. Penilaian kualitas kode (keterbacaan, organisasi, komentar)
 3. Penilaian fungsionalitas (apakah kode berfungsi seperti yang diharapkan?)
 4. Umpan balik khusus tentang area yang perlu ditingkatkan
-5. Kesesuaian dengan PANDUAN EVALUASI di atas.
-6. Skor numerik dari rentang 65-95 jika sesuai dengan instruksi PANDUAN EVALUASI di atas.
+5. Kesesuaian dengan INSTRUKSI PENILAIAN di atas
+6. Skor numerik dari rentang 65-95 jika sesuai dengan instruksi penilaian di atas
 7. Berikan nilai tambahan untuk setiap improvisasi yang dilakukan, misal mengganti variabel atau menambahkan komentar, atau menggunakan fungsi yang lebih baik. Atau mengganti isi konten dengan nama sendiri atau nama project.
 
 Jika Anda perlu berpikir tentang kode ini, letakkan pemikiran Anda di dalam tag <think>...</think>. Bagian ini akan ditampilkan secara terpisah dari penilaian utama.
 
-Format respons Anda menggunakan Markdown agar lebih mudah dibaca. Gunakan judul, poin-poin, dan blok kode jika sesuai.
-`;
+Format respons Anda menggunakan Markdown agar lebih mudah dibaca. Gunakan judul, poin-poin, dan blok kode jika sesuai.`;
 
-      const response = await groq.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "deepseek-r1-distill-llama-70b",
-        temperature: 0.5,
-        max_tokens: 4000,
-      });
-
-      const responseContent = response.choices[0]?.message?.content || "No assessment generated";
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const responseContent = response.text() || "No assessment generated";
       
       // Extract thinking and assessment parts
       const thinkMatch = responseContent.match(/<think>([\s\S]*?)<\/think>/);
@@ -134,6 +128,7 @@ Format respons Anda menggunakan Markdown agar lebih mudah dibaca. Gunakan judul,
       <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
         Python Assignment Checker
       </h1>
+      <p>Model : Gemini 2.5 Flash</p>
 
       <div className="mb-6">
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
@@ -174,17 +169,35 @@ Format respons Anda menggunakan Markdown agar lebih mudah dibaca. Gunakan judul,
       )}
 
       <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">System Prompt (Template Evaluator)</label>
+        <textarea
+          className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          rows="4"
+          placeholder="Masukkan system prompt untuk mengatur peran dan gaya evaluasi AI..."
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          disabled={loading}
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Template ini mengatur bagaimana AI akan berperan sebagai evaluator Python. Anda bisa memodifikasi sesuai kebutuhan.
+        </p>
+      </div>
+
+      <div className="mb-6">
         <label className="block text-sm font-medium mb-2 text-gray-700">
-          Assessment Instructions
+          Instruksi Penilaian Spesifik
         </label>
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Enter specific instructions for assessing this assignment (e.g., 'Check if the code implements a binary search algorithm correctly and efficiently')"
+          placeholder="Contoh: Nilai tugas ini berdasarkan implementasi algoritma binary search (40%), efisiensi kode (25%), keterbacaan dan dokumentasi (20%), dan penanganan edge cases (15%). Berikan skor 0-100 dengan penjelasan detail untuk setiap aspek."
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           rows={4}
           disabled={loading}
         ></textarea>
+        <p className="text-xs text-gray-500 mt-1">
+          Masukkan kriteria penilaian spesifik, bobot nilai, dan aspek-aspek yang ingin dievaluasi untuk kode Python.
+        </p>
       </div>
 
       <div className="mb-6">
@@ -203,7 +216,7 @@ Format respons Anda menggunakan Markdown agar lebih mudah dibaca. Gunakan judul,
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Assessing with Deepseek...
+              Assessing with Gemini...
             </span>
           ) : (
             "Assess Assignment"

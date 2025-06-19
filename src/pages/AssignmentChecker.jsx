@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -9,15 +9,16 @@ import "katex/dist/katex.min.css";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const groq = new Groq({
-  apiKey: import.meta.env.VITE_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const AssignmentChecker = () => {
   const [files, setFiles] = useState([]);
   const [extractedTexts, setExtractedTexts] = useState([]);
   const [grading, setGrading] = useState([]);
+  const [systemPrompt, setSystemPrompt] = useState(
+    "You are an expert assignment evaluator with extensive experience in academic assessment. Your role is to provide comprehensive, constructive feedback on student assignments. Please analyze the submitted work thoroughly and provide detailed feedback including strengths, areas for improvement, and specific suggestions for enhancement. Always conclude your evaluation with a numerical score (0-100) based on the criteria provided."
+  );
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [extractingText, setExtractingText] = useState(false);
@@ -104,23 +105,20 @@ const AssignmentChecker = () => {
     try {
       const results = await Promise.all(
         extractedTexts.map(async (text, index) => {
-          const response = await groq.chat.completions.create({
-            messages: [
-              { 
-                role: "system", 
-                content: "You are an assignment evaluator. Provide detailed feedback and a numerical score (0-100)." 
-              },
-              { 
-                role: "user", 
-                content: `${instruction}\n\nTeks tugas:\n${text.substring(0, 15000)}` 
-              },
-            ],
-            model: "llama-3.3-70b-versatile",
-          });
+          const prompt = `${systemPrompt}
 
+Instruksi Penilaian:
+${instruction}
+
+Teks tugas yang akan dinilai:
+${text.substring(0, 15000)}`;
+          
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          
           return {
             name: files[index].name,
-            grade: response.choices[0]?.message?.content || "Tidak ada respons",
+            grade: response.text() || "Tidak ada respons",
           };
         })
       );
@@ -139,7 +137,7 @@ const AssignmentChecker = () => {
       <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
         Pemeriksa Tugas Otomatis
       </h1>
-      <p>Model : Llama 3.3 70B Versatile</p>
+      <p>Model : Google Gemini 1.5 Flash</p>
       
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Unggah File PDF (Maks. 5 file)</label>
@@ -178,15 +176,33 @@ const AssignmentChecker = () => {
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Instruksi Penilaian</label>
+        <label className="block text-sm font-medium mb-2">System Prompt (Template Evaluator)</label>
         <textarea
           className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           rows="4"
-          placeholder="Contoh: Nilai tugas ini berdasarkan kejelasan argumen, penggunaan referensi, dan struktur penulisan. Berikan skor 0-100."
+          placeholder="Masukkan system prompt untuk mengatur peran dan gaya evaluasi AI..."
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          disabled={loading}
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Template ini mengatur bagaimana AI akan berperan sebagai evaluator. Anda bisa memodifikasi sesuai kebutuhan.
+        </p>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Instruksi Penilaian Spesifik</label>
+        <textarea
+          className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          rows="4"
+          placeholder="Contoh: Nilai tugas ini berdasarkan kejelasan argumen (30%), penggunaan referensi (25%), struktur penulisan (25%), dan originalitas (20%). Berikan skor 0-100 dengan penjelasan detail untuk setiap aspek."
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           disabled={loading}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Masukkan kriteria penilaian spesifik, bobot nilai, dan aspek-aspek yang ingin dievaluasi.
+        </p>
       </div>
 
       {extractedTexts.length > 0 && (
